@@ -200,7 +200,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
       </div>
       <div style="margin-top:8px">
         <label class="empty">鳥瞰牆體剖切高度</label>
-        <div class="range"><input type="range" id="cutH" min="300" max="3400" step="100" value="1600"><span id="cutHVal">1600</span>mm</div>
+        <div class="range"><input type="range" id="cutH" min="300" max="3400" step="100" value="2500"><span id="cutHVal">2500</span>mm</div>
       </div>
     </section>
     <section>
@@ -955,7 +955,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
   var App = window.App = {
     data: DATA, mats: MATS, state: null, rooms: null, floorCanvas: document.createElement('canvas'),
     hist: new C.History(150), mode: '2d', tool: 'select', selId: null, selRoom: null, currentMat: 'oak',
-    opts: { dims: true, beams: false, furniture: true, dividers: true, labels: true, cut: 1600 },
+    opts: { dims: true, beams: false, furniture: true, dividers: true, labels: true, cut: 2500 },
     view: { s: 0.06, ox: 0, oy: 0 }, listeners: [], three: null
   };
   App.on = function (fn) { App.listeners.push(fn); };

@@ -467,3 +467,15 @@ test('clear ceiling height is the 3.4 m storey minus the slab, and nothing reach
   assert.deepStrictEqual(soffits, [2600, 2600, 2600, 2750, 2750, 2750, 2750]);
   assert.ok(soffits.every(s => s < data.wallHeight), 'every beam hangs below the ceiling plane');
 });
+
+test('the bird view wall cut height defaults to 2500 mm in the state, the slider and its label', () => {
+  const opts = html.match(/opts:\s*\{[^}]*\bcut:\s*(\d+)/);
+  const slider = html.match(/<input[^>]*id="cutH"[^>]*>/)[0];
+  const label = html.match(/<span id="cutHVal">(\d+)<\/span>/);
+  const attr = (n) => Number(slider.match(new RegExp('\\b' + n + '="(\\d+)"'))[1]);
+  assert.ok(opts && label, 'cut default and label are present');
+  assert.strictEqual(Number(opts[1]), 2500, 'App.opts.cut');
+  assert.strictEqual(attr('value'), 2500, 'slider value');
+  assert.strictEqual(Number(label[1]), 2500, 'slider label');
+  assert.ok(2500 >= attr('min') && 2500 <= attr('max') && (2500 - attr('min')) % attr('step') === 0, '2500 is reachable on the slider');
+});
