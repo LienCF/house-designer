@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>B2 9F 裝修設計</title>
+<script>
+/* Touch UI: coarse pointers, or ?touch=1 to preview it on a desktop. */
+(function () {
+  var forced = /[?&]touch=1(&|$)/.test(location.search);
+  var coarse = !!(window.matchMedia && window.matchMedia('(any-pointer: coarse)').matches);
+  if (forced || coarse) document.documentElement.classList.add('touch');
+})();
+</script>
 <style>
 :root {
   --bg: #f3f1ed;
@@ -57,6 +65,7 @@ aside h2 { font-size: 12px; margin: 0 0 8px; color: var(--muted); font-weight: 6
 .lib small { color: var(--muted); font-variant-numeric: tabular-nums; }
 #stage { position: relative; overflow: hidden; background: var(--stage); min-height: 0; }
 #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#c2d { touch-action: none; }
 #c3d { opacity: 0; pointer-events: none; }
 #stage.mode3d #c3d { pointer-events: auto; }
 #stage.mode3d #c2d { pointer-events: none; }
@@ -70,6 +79,35 @@ aside h2 { font-size: 12px; margin: 0 0 8px; color: var(--muted); font-weight: 6
 }
 #legend .sw { display: inline-block; width: 26px; height: 10px; vertical-align: middle; margin-right: 6px; border: 1px solid #555; }
 #stage.mode3d #legend { display: none; }
+#legendBtn, #zoomBox, #fpPad, #fpRun { display: none; }
+#legendBtn {
+  position: absolute; right: 12px; top: 12px; z-index: 2; background: rgba(255,255,255,.92); border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+#legendBtn.on { background: var(--accent); color: #fff; }
+#zoomBox {
+  position: absolute; right: 12px; bottom: 12px; z-index: 2; flex-direction: column; gap: 2px; padding: 2px;
+  background: rgba(255,255,255,.92); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow);
+}
+#zoomBox .btn { min-width: 40px; min-height: 40px; font-size: 18px; line-height: 1; padding: 0; }
+html.touch #zoomBox { display: flex; }
+#stage.mode3d #zoomBox, #stage.mode3d #legendBtn { display: none; }
+#fpPad {
+  position: absolute; left: 20px; bottom: 24px; z-index: 2; width: 128px; height: 128px; border-radius: 50%;
+  background: rgba(20,20,20,.22); border: 2px solid rgba(255,255,255,.7); touch-action: none; -webkit-user-select: none; user-select: none;
+}
+#fpKnob {
+  position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; border-radius: 50%;
+  background: rgba(255,255,255,.88); box-shadow: 0 1px 6px rgba(0,0,0,.35); pointer-events: none;
+}
+#fpRun {
+  position: absolute; right: 24px; bottom: 44px; z-index: 2; width: 64px; height: 64px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.7); background: rgba(20,20,20,.22); color: #fff; font-weight: 650; touch-action: manipulation;
+}
+#fpRun.on { background: var(--accent); }
+html.touch #stage.fp #fpPad, html.touch #stage.fp #fpRun { display: block; }
+html.touch #stage.fp #overlay { bottom: auto; top: 12px; }
+html.touch #fpHint { display: none !important; }
 #fpHint {
   position: absolute; left: 50%; top: 14px; transform: translateX(-50%); background: rgba(20,20,20,.72); color: #fff;
   padding: 6px 12px; border-radius: 8px; font-size: 12px; display: none; pointer-events: none;
@@ -117,13 +155,28 @@ table.rooms tfoot td { font-weight: 600; border-bottom: 0; }
 .help { color: var(--muted); font-size: 12px; margin: 0; padding-left: 16px; }
 .help li { margin: 2px 0; }
 kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); border: 1px solid var(--line); border-radius: 3px; padding: 0 3px; }
+html.touch .btn { min-height: 40px; padding: 8px 12px; touch-action: manipulation; }
+html.touch .group { gap: 3px; }
+html.touch .lib button { padding: 9px 10px; touch-action: manipulation; }
+html.touch input, html.touch select { font-size: 16px; }
+html.touch .props input[type=number], html.touch .props input[type=text] { padding: 7px 8px; }
+html.touch input[type=checkbox] { width: 20px; height: 20px; }
+html.touch .checks label, html.touch table.rooms tr, html.touch .mat { touch-action: manipulation; }
+html.touch table.rooms td { padding: 8px 2px; }
+html.touch .range input { min-height: 32px; }
+html.touch #stage, html.touch header, html.touch .lib { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+html.touch { -webkit-tap-highlight-color: transparent; }
 @media (max-width: 1100px) {
   main { grid-template-columns: 160px 1fr 250px; }
 }
 @media (max-width: 820px) {
   body { overflow: auto; grid-template-rows: auto auto auto; }
   main { grid-template-columns: 1fr; }
-  #stage { height: 70vh; order: -1; }
+  #stage { height: 70vh; height: 70dvh; order: -1; }
+  #legendBtn { display: block; }
+  #legend { top: 52px; }
+  #legend.hide { display: none; }
+  #zoomBox { display: flex; }
   aside.left, aside.right { border: 0; border-top: 1px solid var(--line); }
 }
 </style>
@@ -167,13 +220,21 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
   <div id="stage">
     <canvas id="c3d"></canvas>
     <canvas id="c2d"></canvas>
-    <div id="legend">
+    <button class="btn" id="legendBtn" title="顯示或隱藏圖例">圖例</button>
+    <div id="legend" class="hide">
       <div><span class="sw" style="background:var(--bearing)"></span>承重牆／柱（RC，不可拆）</div>
       <div><span class="sw" style="background:repeating-linear-gradient(45deg,#f5f2ec 0 3px,#8a8378 3px 4px)"></span>輕隔間（可拆）</div>
       <div><span class="sw" style="background:#fff;border-style:dashed;border-color:#b5483b"></span>已拆除隔間</div>
       <div><span class="sw" style="background:#fff;border-style:dashed;border-color:#5a7fb0"></span>結構樑（投影）</div>
     </div>
+    <div id="zoomBox">
+      <button class="btn" id="zoomIn" title="放大" aria-label="放大">+</button>
+      <button class="btn" id="zoomOut" title="縮小" aria-label="縮小">&minus;</button>
+      <button class="btn" id="zoomFit" title="符合畫面" aria-label="符合畫面">&#8982;</button>
+    </div>
     <div id="overlay"></div>
+    <div id="fpPad" aria-label="行走搖桿"><div id="fpKnob"></div></div>
+    <button id="fpRun" aria-pressed="false">跑</button>
     <div id="fpHint">點一下畫面鎖定視角；<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移動，<kbd>Shift</kbd> 加速，<kbd>Esc</kbd> 解除鎖定</div>
     <div id="crosshair"></div>
     <div id="toast"></div>
@@ -206,7 +267,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     <section>
       <h2>操作說明</h2>
       <ul class="help">
-        <li>滾輪縮放，拖曳空白處平移（或按住空白鍵、右鍵拖曳）。</li>
+        <li>滾輪縮放，拖曳空白處平移（或按住空白鍵、右鍵拖曳）。觸控裝置：單指拖曳平移、雙指縮放，右下角有 + / − / 符合畫面按鈕。</li>
         <li>家具：拖曳移動、角點改尺寸、上方圓點旋轉（每 15 度，按住 <kbd>Shift</kbd> 自由旋轉），<kbd>R</kbd> 轉 90 度，<kbd>Delete</kbd> 刪除。靠近牆面 150 mm 內自動貼齊，按住 <kbd>Alt</kbd> 暫停吸附。</li>
         <li>測量：點兩點，會吸附牆角；<kbd>Esc</kbd> 取消，在測量線上按右鍵刪除。</li>
         <li>拆牆：點輕隔間拆除，再點一次復原；承重牆、柱與管道間不可拆。</li>
@@ -825,7 +886,33 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
   History.prototype.redo = function () { return this.canRedo() ? JSON.parse(this.stack[++this.idx]) : null; };
   History.prototype.reset = function (state) { this.stack = []; this.idx = -1; this.push(state); };
 
+  // Two-finger gesture: scale by the finger distance ratio (clamped) and keep the plan point that was under
+  // the start midpoint under the current midpoint, so one gesture zooms and pans together.
+  function pinchView(view, a0, b0, a1, b1, limits) {
+    var d0 = Math.hypot(b0.sx - a0.sx, b0.sy - a0.sy), d1 = Math.hypot(b1.sx - a1.sx, b1.sy - a1.sy);
+    var ratio = d0 < 1e-6 ? 1 : d1 / d0;
+    var s = Math.max(limits.min, Math.min(limits.max, view.s * ratio)), real = s / view.s;
+    var m0x = (a0.sx + b0.sx) / 2, m0y = (a0.sy + b0.sy) / 2, m1x = (a1.sx + b1.sx) / 2, m1y = (a1.sy + b1.sy) / 2;
+    return { s: s, ox: m1x - (m0x - view.ox) * real, oy: m1y - (m0y - view.oy) * real };
+  }
+  // Virtual walk pad: pad offset in px (screen y points down) to forward/strafe in -1..1 with a dead zone.
+  function padVector(dx, dy, radius, dead) {
+    var h = Math.hypot(dx, dy), m = h / radius;
+    if (m <= dead) return { fw: 0, st: 0 };
+    var out = Math.min(1, (m - dead) / (1 - dead));
+    return { fw: -(dy / h) * out, st: (dx / h) * out };
+  }
+  // One walking step in plan mm. fw/st beyond unit length are normalized, so diagonals are not faster;
+  // shorter vectors scale the speed down.
+  function walkDelta(fw, st, heading, speed, dt) {
+    var len = Math.hypot(fw, st);
+    if (!len) return { dx: 0, dy: 0 };
+    var sp = speed * dt * Math.min(1, len) / len;
+    return { dx: (Math.cos(heading) * fw + Math.sin(heading) * st) * sp, dy: (Math.sin(heading) * fw - Math.cos(heading) * st) * sp };
+  }
+
   var Core = {
+    pinchView: pinchView, padVector: padVector, walkDelta: walkDelta,
     CELL: CELL, clone: clone, defaultState: defaultState, wallRemovable: wallRemovable,
     activeWalls: activeWalls, activeOpenings: activeOpenings, toggleWall: toggleWall, addWall: addWall,
     polygonArea: polygonArea, bbox: bbox, computeRooms: computeRooms, regionMaterial: regionMaterial,
@@ -1079,6 +1166,10 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
   /* ---------- 2D view transform ---------- */
   var cv = $('c2d'), stage = $('stage');
   var cssW = 0, cssH = 0, dpr = 1, autoFit = true;
+  var TOUCH = document.documentElement.classList.contains('touch');
+  var ZOOM = { min: 0.012, max: 1.2 };
+  // Hit radii in screen px: fingers are far less precise than a mouse pointer.
+  function hitPx(n) { return TOUCH ? n * 2 : n; }
   function X(x, v) { v = v || App.view; return x * v.s + v.ox; }
   function Y(y, v) { v = v || App.view; return -y * v.s + v.oy; }
   function toPlan(sx, sy) { var v = App.view; return { x: (sx - v.ox) / v.s, y: (v.oy - sy) / v.s }; }
@@ -1095,7 +1186,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     var ob = ov && ov.offsetHeight ? ov.offsetHeight + 16 : 0;
     var v = fitView(w, h - ob);
     if (!lg || !lg.offsetWidth) return v;
-    var lw = lg.offsetWidth + 24, lh = lg.offsetHeight + 24;
+    var lw = lg.offsetWidth + 24, lh = lg.offsetTop + lg.offsetHeight + 12;
     var right = PLAN_BOX.x2 * v.s + v.ox, top = -PLAN_BOX.y2 * v.s + v.oy;
     if (right < w - lw || top > lh) return v;
     var below = fitView(w, h - ob - lh); below.oy += lh;
@@ -1103,6 +1194,23 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     return below.s >= left.s ? below : left;
   }
   App.fit = function () { autoFit = true; App.view = fitScreen(cssW, cssH); updateScale(); redraw(); };
+  function zoomAt(k, sx, sy) {
+    var ns = Math.max(ZOOM.min, Math.min(ZOOM.max, App.view.s * k)), real = ns / App.view.s;
+    App.view.ox = sx - (sx - App.view.ox) * real;
+    App.view.oy = sy - (sy - App.view.oy) * real;
+    App.view.s = ns;
+    autoFit = false;
+    updateScale();
+    redraw();
+  }
+  $('zoomIn').addEventListener('click', function () { zoomAt(1.4, cssW / 2, cssH / 2); });
+  $('zoomOut').addEventListener('click', function () { zoomAt(1 / 1.4, cssW / 2, cssH / 2); });
+  $('zoomFit').addEventListener('click', function () { App.fit(); });
+  $('legendBtn').addEventListener('click', function () {
+    var hidden = $('legend').classList.toggle('hide');
+    this.classList.toggle('on', !hidden);
+    if (autoFit) App.fit();
+  });
   function resize() {
     var r = stage.getBoundingClientRect();
     var first = cssW === 0;
@@ -1680,7 +1788,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     return best;
   }
   function hitHandle(f, p) {
-    var tol = 9 / App.view.s, l = localOf(f, p);
+    var tol = hitPx(9) / App.view.s, l = localOf(f, p);
     if (Math.hypot(l.x, l.y - (f.d / 2 + 28 / App.view.s)) <= tol) return { kind: 'rotate' };
     var cs = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
     for (var i = 0; i < 4; i++) {
@@ -1689,7 +1797,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     return null;
   }
   function hitWall(p) {
-    var tol = 4 / App.view.s, found = null;
+    var tol = hitPx(4) / App.view.s, found = null;
     App.state.walls.forEach(function (w) {
       if (p.x >= Math.min(w.x1, w.x2) - tol && p.x <= Math.max(w.x1, w.x2) + tol && p.y >= Math.min(w.y1, w.y2) - tol && p.y <= Math.max(w.y1, w.y2) + tol) {
         if (!found || C.wallRemovable(w)) found = w;
@@ -1700,8 +1808,8 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
   function hitViewer(p) {
     var vw = App.state.viewer, s = App.view.s;
     var tip = { x: vw.x + Math.cos(vw.heading) * 34 / s, y: vw.y + Math.sin(vw.heading) * 34 / s };
-    if (Math.hypot(p.x - tip.x, p.y - tip.y) * s <= 8) return 'turn';
-    if (Math.hypot(p.x - vw.x, p.y - vw.y) * s <= 11) return 'move';
+    if (Math.hypot(p.x - tip.x, p.y - tip.y) * s <= hitPx(8)) return 'turn';
+    if (Math.hypot(p.x - vw.x, p.y - vw.y) * s <= hitPx(11)) return 'move';
     return null;
   }
   function snapTargets() { return C.activeWalls(App.state).concat(C.activeOpenings(App.state)); }
@@ -1710,7 +1818,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     App.state.furniture.forEach(function (f) {
       [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (c) { var q = fromLocal(f, c[0] * f.w / 2, c[1] * f.d / 2); pts.push([q.x, q.y]); });
     });
-    return C.nearestPoint([p.x, p.y], pts, 10 / App.view.s);
+    return C.nearestPoint([p.x, p.y], pts, hitPx(10) / App.view.s);
   }
   function orthoEnd(a, b) {
     return Math.abs(b.x - a.x) >= Math.abs(b.y - a.y) ? { x: b.x, y: a.y } : { x: a.x, y: b.y };
@@ -1725,7 +1833,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
   cv.addEventListener('contextmenu', function (e) {
     e.preventDefault();
     if (App.tool === 'measure') {
-      var s = evPt(e), p = toPlan(s.sx, s.sy), tol = 8 / App.view.s;
+      var s = evPt(e), p = toPlan(s.sx, s.sy), tol = hitPx(8) / App.view.s;
       var idx = App.state.measures.findIndex(function (m) { return distSeg(p, m) <= tol; });
       if (idx >= 0) { App.state.measures.splice(idx, 1); App.commit('measures'); toast('已刪除測量線'); }
     }
@@ -1736,32 +1844,42 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     return Math.hypot(p.x - (m.x1 + t * dx), p.y - (m.y1 + t * dy));
   }
 
-  cv.addEventListener('pointerdown', function (e) {
-    if (App.mode !== '2d') return;
-    cv.setPointerCapture(e.pointerId);
-    var s = evPt(e), p = toPlan(s.sx, s.sy);
-    if (e.button === 1 || e.button === 2 || spaceDown) { drag = { kind: 'pan', sx: s.sx, sy: s.sy, ox: App.view.ox, oy: App.view.oy }; return; }
-    if (e.button !== 0) return;
-    var tool = App.tool;
-    if (tool === 'select') {
-      var sf = selected(), hnd = sf && hitHandle(sf, p);
-      if (hnd) { drag = { kind: hnd.kind, f: sf, h: hnd, moved: false }; return; }
-      var hv = hitViewer(p);
-      if (hv) { drag = { kind: 'viewer-' + hv, moved: false }; return; }
-      var f = hitFurniture(p);
-      if (f) {
-        App.selId = f.id; refreshProps(); App.emit('selection');
-        drag = { kind: 'move', f: f, dx: p.x - f.x, dy: p.y - f.y, moved: false };
-        redraw(); return;
-      }
-      if (App.selId) { App.selId = null; refreshProps(); App.emit('selection'); }
-      drag = { kind: 'pan', sx: s.sx, sy: s.sy, ox: App.view.ox, oy: App.view.oy };
-      redraw();
-    } else if (tool === 'measure') {
+  /* ---------- touch gestures ---------- */
+  var touches = {}, pinch = null, tap = null;
+  function snapF(f) { return { x: f.x, y: f.y, w: f.w, d: f.d, rot: f.rot }; }
+  // A second finger turns a one-finger edit into a view gesture: undo the edit that was in progress.
+  function revertDrag() {
+    var d = drag;
+    drag = null; snapGuide = null;
+    if (!d || !d.orig) return;
+    if (d.f) { d.f.x = d.orig.x; d.f.y = d.orig.y; d.f.w = d.orig.w; d.f.d = d.orig.d; d.f.rot = d.orig.rot; App.emit('furniture-live'); }
+    else if (d.kind.indexOf('viewer') === 0) { var vw = App.state.viewer; vw.x = d.orig.x; vw.y = d.orig.y; vw.heading = d.orig.heading; }
+    refreshProps(true);
+  }
+  function startPinch() {
+    tap = null;
+    revertDrag();
+    var ids = Object.keys(touches).map(Number);
+    pinch = { ids: ids, a0: touches[ids[0]], b0: touches[ids[1]], view0: { s: App.view.s, ox: App.view.ox, oy: App.view.oy } };
+    redraw();
+  }
+  function applyPinch() {
+    var a = touches[pinch.ids[0]], b = touches[pinch.ids[1]];
+    if (!a || !b) return;
+    var nv = C.pinchView(pinch.view0, pinch.a0, pinch.b0, a, b, ZOOM);
+    App.view.s = nv.s; App.view.ox = nv.ox; App.view.oy = nv.oy;
+    autoFit = false;
+    updateScale();
+    redraw();
+  }
+
+  // Non-select tools act on a press. On touch they run on release instead, so a pinch or a pan can start first.
+  function toolPress(tool, p, shiftKey) {
+    if (tool === 'measure') {
       var q = measureSnap(p) || [p.x, p.y], pt = { x: Math.round(q[0]), y: Math.round(q[1]) };
       if (!measureStart) { measureStart = pt; }
       else {
-        if (e.shiftKey) pt = orthoEnd(measureStart, pt);
+        if (shiftKey) pt = orthoEnd(measureStart, pt);
         if (Math.hypot(pt.x - measureStart.x, pt.y - measureStart.y) > 5) {
           App.state.measures.push({ x1: measureStart.x, y1: measureStart.y, x2: pt.x, y2: pt.y });
           App.commit('measures');
@@ -1795,12 +1913,55 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
       App.commit('floors');
       toast(reg.label + ' 改為 ' + MATS[App.currentMat].name);
     }
+  }
+
+  cv.addEventListener('pointerdown', function (e) {
+    if (App.mode !== '2d') return;
+    cv.setPointerCapture(e.pointerId);
+    var s = evPt(e), p = toPlan(s.sx, s.sy);
+    if (e.pointerType === 'touch') {
+      touches[e.pointerId] = s;
+      var n = Object.keys(touches).length;
+      if (n === 2) { startPinch(); return; }
+      if (n > 2) return;
+    }
+    if (e.button === 1 || e.button === 2 || spaceDown) { drag = { kind: 'pan', pid: e.pointerId, sx: s.sx, sy: s.sy, ox: App.view.ox, oy: App.view.oy }; return; }
+    if (e.button !== 0) return;
+    var tool = App.tool;
+    if (tool === 'select') {
+      var sf = selected(), hnd = sf && hitHandle(sf, p);
+      if (hnd) { drag = { kind: hnd.kind, pid: e.pointerId, f: sf, h: hnd, moved: false, orig: snapF(sf) }; return; }
+      var hv = hitViewer(p);
+      if (hv) { var vw0 = App.state.viewer; drag = { kind: 'viewer-' + hv, pid: e.pointerId, moved: false, orig: { x: vw0.x, y: vw0.y, heading: vw0.heading } }; return; }
+      var f = hitFurniture(p);
+      if (f) {
+        App.selId = f.id; refreshProps(); App.emit('selection');
+        drag = { kind: 'move', f: f, pid: e.pointerId, dx: p.x - f.x, dy: p.y - f.y, moved: false, orig: snapF(f) };
+        redraw(); return;
+      }
+      if (App.selId) { App.selId = null; refreshProps(); App.emit('selection'); }
+      drag = { kind: 'pan', pid: e.pointerId, sx: s.sx, sy: s.sy, ox: App.view.ox, oy: App.view.oy };
+      redraw();
+    } else if (e.pointerType === 'touch') {
+      tap = { pid: e.pointerId, sx: s.sx, sy: s.sy };
+    } else {
+      toolPress(tool, p, e.shiftKey);
+    }
   });
 
   cv.addEventListener('pointermove', function (e) {
     var s = evPt(e), p = toPlan(s.sx, s.sy);
     $('stCursor').textContent = 'X ' + Math.round(p.x) + '  Y ' + Math.round(p.y) + ' mm';
     if (App.mode !== '2d') return;
+    if (e.pointerType === 'touch' && touches[e.pointerId]) {
+      touches[e.pointerId] = s;
+      if (pinch) { applyPinch(); return; }
+    }
+    // On touch a tool tap is only a tap while the finger stays put; moving it pans the view instead.
+    if (tap && e.pointerId === tap.pid && Math.hypot(s.sx - tap.sx, s.sy - tap.sy) > 10) {
+      drag = { kind: 'pan', pid: tap.pid, sx: tap.sx, sy: tap.sy, ox: App.view.ox, oy: App.view.oy };
+      tap = null;
+    }
     hoverPt = p;
     if (!drag) {
       hoverSnap = (App.tool === 'measure' || App.tool === 'wall') ? measureSnap(p) : null;
@@ -1812,6 +1973,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
       redraw();
       return;
     }
+    if (e.pointerId !== drag.pid) return;
     var f = drag.f;
     if (drag.kind === 'pan') {
       autoFit = false;
@@ -1857,8 +2019,32 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     if (d.moved && d.kind.indexOf('viewer') === 0) { autosave(); App.emit('viewer'); }
     redraw();
   }
-  cv.addEventListener('pointerup', endDrag);
-  cv.addEventListener('pointercancel', endDrag);
+  function onPointerEnd(e) {
+    if (e.pointerType === 'touch') {
+      delete touches[e.pointerId];
+      if (pinch) {
+        if (pinch.ids.indexOf(e.pointerId) < 0) return;
+        pinch = null;
+        // The finger that stays down carries on as a pan.
+        var rest = Object.keys(touches);
+        if (rest.length === 1) {
+          var t = touches[rest[0]];
+          drag = { kind: 'pan', pid: +rest[0], sx: t.sx, sy: t.sy, ox: App.view.ox, oy: App.view.oy };
+        }
+        return;
+      }
+    }
+    if (tap && e.pointerId === tap.pid) {
+      var tp = tap;
+      tap = null;
+      if (e.type === 'pointerup') toolPress(App.tool, toPlan(tp.sx, tp.sy), false);
+      return;
+    }
+    if (drag && e.pointerId !== drag.pid) return;
+    endDrag();
+  }
+  cv.addEventListener('pointerup', onPointerEnd);
+  cv.addEventListener('pointercancel', onPointerEnd);
   cv.addEventListener('pointerleave', function () { hoverPt = null; hoverRoom = null; hoverWall = null; redraw(); });
 
   function updateCursor(p) {
@@ -1879,14 +2065,8 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
   cv.addEventListener('wheel', function (e) {
     if (App.mode !== '2d') return;
     e.preventDefault();
-    var s = evPt(e), k = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015));
-    var ns = Math.max(0.012, Math.min(1.2, App.view.s * k)), real = ns / App.view.s;
-    App.view.ox = s.sx - (s.sx - App.view.ox) * real;
-    App.view.oy = s.sy - (s.sy - App.view.oy) * real;
-    App.view.s = ns;
-    autoFit = false;
-    updateScale();
-    redraw();
+    var s = evPt(e);
+    zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)), s.sx, s.sy);
   }, { passive: false });
 
   function updateScale() { $('stScale').textContent = '比例 約 1:' + Math.round(1 / (App.view.s * 0.2646)); }
@@ -2043,6 +2223,11 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     wall: '加牆：點起點與終點，自動水平或垂直，厚 100 mm；Esc 取消',
     floor: '地板：點房間套用目前材質'
   };
+  if (TOUCH) {
+    TOOL_HINT.select = '選取：拖曳家具移動，角點改尺寸，圓點旋轉；拖曳空白處平移，雙指縮放';
+    TOOL_HINT.measure = '測量：點兩點量距離，吸附牆角與家具角；拖曳空白處平移，雙指縮放';
+    TOOL_HINT.wall = '加牆：點起點與終點，自動水平或垂直，厚 100 mm；拖曳空白處平移';
+  }
   function setTool(t) {
     App.tool = t; measureStart = null; wallStart = null;
     document.querySelectorAll('#toolGroup .btn').forEach(function (b) { b.classList.toggle('on', b.dataset.tool === t); });
@@ -2741,7 +2926,7 @@ function endFurnitureDrag(commit) {
 }
 cv3.addEventListener('pointercancel', () => { endFurnitureDrag(); fpDrag = null; downAt = null; });
 cv3.addEventListener('pointerup', (e) => {
-  if (App.mode === 'fp') { fpDrag = null; endFurnitureDrag(); return; }
+  if (App.mode === 'fp') { if (fpDrag && fpDrag.id === e.pointerId) fpDrag = null; endFurnitureDrag(); return; }
   if (dragF) {
     endFurnitureDrag();
   } else if (downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 4 && App.mode === 'bird' && App.selId) {
@@ -2761,11 +2946,12 @@ controls.addEventListener('change', requestRender);
 
 /* ---------- first person ---------- */
 const keys = new Set();
+const TOUCH = document.documentElement.classList.contains('touch');
 let fpDrag = null, blockerList = [];
 function locked() { return document.pointerLockElement === cv3; }
 cv3.addEventListener('pointerdown', (e) => {
   if (App.mode !== 'fp' || anim) return;
-  fpDrag = { x: e.clientX, y: e.clientY };
+  fpDrag = { x: e.clientX, y: e.clientY, id: e.pointerId };
   if (!locked() && cv3.requestPointerLock) {
     try {
       const r = cv3.requestPointerLock();
@@ -2776,11 +2962,11 @@ cv3.addEventListener('pointerdown', (e) => {
 function fpMouse(e) {
   let mx = 0, my = 0;
   if (locked()) { mx = e.movementX; my = e.movementY; }
-  else if (fpDrag && e.buttons) { mx = e.clientX - fpDrag.x; my = e.clientY - fpDrag.y; fpDrag = { x: e.clientX, y: e.clientY }; }
+  else if (fpDrag && e.buttons && e.pointerId === fpDrag.id) { mx = e.clientX - fpDrag.x; my = e.clientY - fpDrag.y; fpDrag = { x: e.clientX, y: e.clientY, id: fpDrag.id }; }
   else return;
-  const v = App.state.viewer;
-  v.heading -= mx * 0.0025;
-  fpPitch = Math.max(-1.3, Math.min(1.3, fpPitch - my * 0.0025));
+  const v = App.state.viewer, k = e.pointerType === 'touch' ? 0.004 : 0.0025;
+  v.heading -= mx * k;
+  fpPitch = Math.max(-1.3, Math.min(1.3, fpPitch - my * k));
   placeFpCamera();
   App.redraw();
   clearTimeout(fpSaveTimer);
@@ -2803,13 +2989,44 @@ window.addEventListener('keydown', (e) => {
   }
 });
 window.addEventListener('keyup', (e) => keys.delete(e.code));
-window.addEventListener('blur', () => keys.clear());
+window.addEventListener('blur', () => { keys.clear(); resetPad(); });
+
+/* Virtual walk pad for touch screens: the thumb offset from the pad center drives forward/strafe. */
+const pad = { fw: 0, st: 0, id: null, run: false };
+const PAD_R = 40, PAD_DEAD = 0.18;
+const padEl = $('fpPad'), knobEl = $('fpKnob'), runEl = $('fpRun');
+function padMove(e) {
+  const r = padEl.getBoundingClientRect();
+  const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+  const v = Core.padVector(dx, dy, PAD_R, PAD_DEAD), h = Math.hypot(dx, dy), k = h > PAD_R ? PAD_R / h : 1;
+  pad.fw = v.fw; pad.st = v.st;
+  knobEl.style.transform = 'translate(' + dx * k + 'px,' + dy * k + 'px)';
+}
+function resetPad() {
+  pad.id = null; pad.fw = 0; pad.st = 0;
+  knobEl.style.transform = 'translate(0,0)';
+}
+padEl.addEventListener('pointerdown', (e) => {
+  if (App.mode !== 'fp' || pad.id !== null) return;
+  pad.id = e.pointerId;
+  padEl.setPointerCapture(e.pointerId);
+  padMove(e);
+  e.preventDefault();
+});
+padEl.addEventListener('pointermove', (e) => { if (e.pointerId === pad.id) padMove(e); });
+padEl.addEventListener('pointerup', (e) => { if (e.pointerId === pad.id) resetPad(); });
+padEl.addEventListener('pointercancel', (e) => { if (e.pointerId === pad.id) resetPad(); });
+runEl.addEventListener('click', () => {
+  pad.run = !pad.run;
+  runEl.classList.toggle('on', pad.run);
+  runEl.setAttribute('aria-pressed', String(pad.run));
+});
 
 let fpSaveTimer = 0;
 function stepFp(dt) {
-  if (!keys.size) return;
-  const v = App.state.viewer, run = keys.has('ShiftLeft') || keys.has('ShiftRight') ? 2.4 : 1.3;
-  let fw = 0, st = 0, turn = 0;
+  if (!keys.size && !pad.fw && !pad.st) return;
+  const v = App.state.viewer, run = keys.has('ShiftLeft') || keys.has('ShiftRight') || pad.run ? 2.4 : 1.3;
+  let fw = pad.fw, st = pad.st, turn = 0;
   if (keys.has('KeyW') || keys.has('ArrowUp')) fw += 1;
   if (keys.has('KeyS') || keys.has('ArrowDown')) fw -= 1;
   if (keys.has('KeyD')) st += 1;
@@ -2817,10 +3034,8 @@ function stepFp(dt) {
   if (keys.has('ArrowLeft') || keys.has('KeyQ')) turn += 1;
   if (keys.has('ArrowRight') || keys.has('KeyE')) turn -= 1;
   v.heading += turn * 1.6 * dt;
-  const len = Math.hypot(fw, st);
-  if (len) {
-    const sp = run * 1000 * dt / len, h = v.heading;
-    const dx = (Math.cos(h) * fw + Math.sin(h) * st) * sp, dy = (Math.sin(h) * fw - Math.cos(h) * st) * sp;
+  const { dx, dy } = Core.walkDelta(fw, st, v.heading, run * 1000, dt);
+  if (dx || dy) {
     if (dirty.blockers) { blockerList = Core.blockers(App.state); dirty.blockers = false; }
     // Per-axis moves slide along walls; a viewer placed inside furniture can still walk out.
     const p = Core.slideCircle(v.x, v.y, dx, dy, BODY_R, blockerList);
@@ -2842,9 +3057,13 @@ function setButtons(mode) {
 }
 function overlayText(mode) {
   $('overlay').textContent = mode === 'bird'
-    ? '鳥瞰：左鍵拖曳旋轉、右鍵平移、滾輪縮放；拖曳家具可移動並同步到平面；右側滑桿調整剖切高度'
+    ? (TOUCH
+      ? '鳥瞰：單指拖曳旋轉、雙指縮放與平移；拖曳家具可移動並同步到平面；下方滑桿調整剖切高度'
+      : '鳥瞰：左鍵拖曳旋轉、右鍵平移、滾輪縮放；拖曳家具可移動並同步到平面；右側滑桿調整剖切高度')
     : mode === 'fp'
-      ? '漫遊：點畫面鎖定滑鼠（或按住拖曳）轉視角，WASD 移動，Q/E 轉向，Shift 加速；平面上的橘色人形同步移動'
+      ? (TOUCH
+        ? '漫遊：左下搖桿移動，拖曳畫面轉視角，右下「跑」切換加速；平面上的橘色人形同步移動'
+        : '漫遊：點畫面鎖定滑鼠（或按住拖曳）轉視角，WASD 移動，Q/E 轉向，Shift 加速；平面上的橘色人形同步移動')
       : '';
 }
 
@@ -2856,6 +3075,7 @@ App.switchView = function (mode) {
   if (from === 'bird') birdPose = { pos: camera.position.clone(), quat: camera.quaternion.clone(), fov: camera.fov, cut: App.opts.cut * MM, target: controls.target.clone() };
   if (from === 'fp' && locked()) document.exitPointerLock();
   keys.clear();
+  resetPad();
   if (mode !== '2d' && App.tool !== 'select') App.setTool('select');
   App.mode = mode;
   setButtons(mode);
@@ -2866,6 +3086,7 @@ App.switchView = function (mode) {
   if (mode === 'fp') fpPitch = 0;
   const end = poseFor(mode);
   stage.classList.toggle('mode3d', mode !== '2d');
+  stage.classList.toggle('fp', mode === 'fp');
   $('fpHint').style.display = 'none';
   $('crosshair').style.display = 'none';
   overlayText(mode);

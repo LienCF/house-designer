@@ -499,3 +499,65 @@ test('each shower set is wall mounted on a non-glass side at the plumbing point 
       `${id}: wall point (${Math.round(wx)}, ${Math.round(wy)}) should be near ${planPoint[id]}`);
   }
 });
+
+test('a two-finger pinch keeps the plan point under the midpoint and clamps the scale', () => {
+  const view = { s: 0.1, ox: 100, oy: 500 };
+  const limits = { min: 0.012, max: 1.2 };
+  const plan = (v, sx, sy) => ({ x: (sx - v.ox) / v.s, y: (v.oy - sy) / v.s });
+  // Fingers spread from 100 px to 200 px apart while the midpoint moves from (300, 300) to (320, 280).
+  const next = Core.pinchView(view, { sx: 250, sy: 300 }, { sx: 350, sy: 300 }, { sx: 220, sy: 280 }, { sx: 420, sy: 280 }, limits);
+  assert.ok(Math.abs(next.s - 0.2) < 1e-9, 'scale follows the finger distance ratio');
+  const before = plan(view, 300, 300), after = plan(next, 320, 280);
+  assert.ok(Math.abs(before.x - after.x) < 1e-6 && Math.abs(before.y - after.y) < 1e-6, 'the plan point under the midpoint follows the fingers');
+  const pan = Core.pinchView(view, { sx: 250, sy: 300 }, { sx: 350, sy: 300 }, { sx: 270, sy: 310 }, { sx: 370, sy: 310 }, limits);
+  assert.strictEqual(pan.s, view.s);
+  assert.ok(Math.abs(pan.ox - (view.ox + 20)) < 1e-9 && Math.abs(pan.oy - (view.oy + 10)) < 1e-9, 'equal distance is a pure two-finger pan');
+  const huge = Core.pinchView(view, { sx: 290, sy: 300 }, { sx: 310, sy: 300 }, { sx: 0, sy: 300 }, { sx: 600, sy: 300 }, limits);
+  assert.strictEqual(huge.s, limits.max);
+  const tiny = Core.pinchView(view, { sx: 0, sy: 300 }, { sx: 600, sy: 300 }, { sx: 299, sy: 300 }, { sx: 301, sy: 300 }, limits);
+  assert.strictEqual(tiny.s, limits.min);
+  const same = Core.pinchView(view, { sx: 100, sy: 100 }, { sx: 100, sy: 100 }, { sx: 120, sy: 100 }, { sx: 140, sy: 100 }, limits);
+  assert.ok(Number.isFinite(same.s) && Number.isFinite(same.ox), 'two fingers on the same spot do not divide by zero');
+});
+
+test('the virtual walk pad has a dead zone, maps up to forward and saturates at the rim', () => {
+  const R = 48, dead = 0.2;
+  const zero = Core.padVector(3, -4, R, dead);
+  assert.deepStrictEqual([zero.fw, zero.st], [0, 0]);
+  const up = Core.padVector(0, -R, R, dead);
+  assert.ok(Math.abs(up.fw - 1) < 1e-9 && Math.abs(up.st) < 1e-9, 'rim straight up is full forward');
+  const right = Core.padVector(R, 0, R, dead);
+  assert.ok(Math.abs(right.st - 1) < 1e-9 && Math.abs(right.fw) < 1e-9, 'rim to the right is full strafe right');
+  const down = Core.padVector(0, R / 2, R, dead);
+  assert.ok(down.fw < 0 && down.fw > -1, 'half way down walks backwards at part speed');
+  const far = Core.padVector(300, -400, R, dead);
+  assert.ok(Math.abs(Math.hypot(far.fw, far.st) - 1) < 1e-9, 'beyond the rim the magnitude stays at 1');
+  const justOut = Core.padVector(R * 0.21, 0, R, dead);
+  assert.ok(justOut.st > 0 && justOut.st < 0.05, 'speed ramps up from zero at the dead zone edge');
+});
+
+test('walk steps keep the keyboard speed and scale with how far the pad is pushed', () => {
+  const speed = 1300, dt = 0.016;
+  const fwd = Core.walkDelta(1, 0, 0, speed, dt);
+  assert.ok(Math.abs(fwd.dx - speed * dt) < 1e-9 && Math.abs(fwd.dy) < 1e-9, 'forward at heading 0 goes east at full speed');
+  const north = Core.walkDelta(1, 0, Math.PI / 2, speed, dt);
+  assert.ok(Math.abs(north.dy - speed * dt) < 1e-9 && Math.abs(north.dx) < 1e-9, 'heading pi/2 walks north');
+  const diag = Core.walkDelta(1, 1, 0, speed, dt);
+  assert.ok(Math.abs(Math.hypot(diag.dx, diag.dy) - speed * dt) < 1e-9, 'W and D together are not faster than W alone');
+  const half = Core.walkDelta(0.5, 0, 0, speed, dt);
+  assert.ok(Math.abs(half.dx - speed * dt / 2) < 1e-9, 'half deflection walks at half speed');
+  const right = Core.walkDelta(0, 1, 0, speed, dt);
+  assert.ok(Math.abs(right.dy + speed * dt) < 1e-9 && Math.abs(right.dx) < 1e-9, 'strafe right at heading 0 goes south');
+  const idle = Core.walkDelta(0, 0, 1, speed, dt);
+  assert.deepStrictEqual([idle.dx, idle.dy], [0, 0]);
+});
+
+test('touch devices get a 2D canvas that owns its gestures, a walk pad, a legend toggle and 16 px inputs', () => {
+  const css = html.match(/<style>([\s\S]*?)<\/style>/)[1];
+  assert.match(css, /#c2d\s*\{[^}]*touch-action:\s*none/, 'the 2D canvas must not let Safari scroll or zoom the page under a drag');
+  assert.match(css, /html\.touch\s+(input|select)[^{]*\{[^}]*font-size:\s*16px/, 'iOS zooms the page when a smaller input is focused');
+  assert.match(css, /@media \(max-width: 820px\)[\s\S]*#legend\.hide\s*\{\s*display:\s*none/, 'the legend can be hidden on a phone');
+  for (const id of ['fpPad', 'fpKnob', 'fpRun', 'legendBtn', 'zoomIn', 'zoomOut', 'zoomFit']) assert.match(html, new RegExp('id="' + id + '"'), id + ' exists');
+  assert.match(html, /<div id="legend" class="hide">/, 'the legend starts hidden on a phone');
+  assert.match(html, /any-pointer: coarse/, 'the touch UI switches on for coarse pointers');
+});
