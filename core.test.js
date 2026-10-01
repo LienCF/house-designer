@@ -455,3 +455,15 @@ test('the living-room TV centre sits at seated eye level and clears the TV stand
   assert.ok(centre >= 950 && centre <= 1200, `TV centre ${centre} mm should be 950-1200 mm (seated eye level)`);
   assert.ok(tv.elev >= stand.h + 100, `TV bottom ${tv.elev} mm should clear the stand top (${stand.h} mm) by 100 mm`);
 });
+
+test('clear ceiling height is the 3.4 m storey minus the slab, and nothing reaches above it', () => {
+  assert.strictEqual(data.storeyHeight, 3400, 'storey height from the user');
+  assert.strictEqual(data.wallHeight, 3200, 'clear height is at least 3.2 m once the slab is subtracted');
+  for (const f of data.furniture) assert.ok((f.elev || 0) + f.h <= data.wallHeight, `${f.id} top is below the ceiling`);
+  for (const o of data.openings) if (o.head) assert.ok(o.head <= data.wallHeight, `${o.id} head is below the ceiling`);
+  for (const c of data.curtains) assert.ok(c.rail <= data.wallHeight, `${c.id} rail is below the ceiling`);
+  // beam depth is the structural depth measured from the storey level, so the soffits stay put
+  const soffits = data.beams.map(b => data.storeyHeight - b.depth);
+  assert.deepStrictEqual(soffits, [2600, 2600, 2600, 2750, 2750, 2750, 2750]);
+  assert.ok(soffits.every(s => s < data.wallHeight), 'every beam hangs below the ceiling plane');
+});

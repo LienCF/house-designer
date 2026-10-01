@@ -227,7 +227,8 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
 <script id="plan-data" type="application/json">
 {
   "units": "mm, y axis points north (up on plan), origin at the guest bath west wall inner corner line",
-  "wallHeight": 3400,
+  "storeyHeight": 3400,
+  "wallHeight": 3200,
   "outline": [[-75,8521],[6347,8521],[6347,8969],[7771,8969],[7771,9270],[8670,9270],[8670,8270],[8421,8270],[8421,6123],[8421,5971],[7321,5971],[7321,4923],[7870,4923],[7870,3874],[9420,3874],[9420,1075],[8820,1075],[8820,-75],[725,-75],[725,5523],[-174,5523],[-174,5672],[75,5672],[75,6811],[-75,6811]],
   "walls": [
     {"id":"S01","name":"玄關外牆（凹口）","type":"bearing","x1":-174,"y1":5523,"x2":875,"y2":5672},
@@ -1536,7 +1537,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
         ctx.save(); ctx.fillStyle = 'rgba(50,85,140,.95)';
         ctx.translate(r.x + r.w / 2, r.y + r.h / 2);
         if (r.h > r.w) ctx.rotate(-Math.PI / 2);
-        ctx.fillText(b.id + ' 梁 ' + b.section + ' 梁底 ' + (DATA.wallHeight - b.depth), 0, 0);
+        ctx.fillText(b.id + ' 梁 ' + b.section + ' 梁底 ' + (DATA.storeyHeight - b.depth), 0, 0);
         ctx.restore();
       });
       ctx.restore();
@@ -2214,7 +2215,7 @@ const App = window.App, Core = window.Core, DATA = App.data;
 const stage = document.getElementById('stage');
 const cv3 = document.getElementById('c3d'), cv2 = document.getElementById('c2d');
 const $ = (id) => document.getElementById(id);
-const MM = 0.001, WALL_H = DATA.wallHeight || 3400, EYE = 1600, BODY_R = 200;
+const MM = 0.001, STOREY_H = DATA.storeyHeight || 3400, WALL_H = DATA.wallHeight || 3200, EYE = 1600, BODY_R = 200;
 
 /* ---------- renderer, scene, camera ---------- */
 const renderer = new THREE.WebGLRenderer({ canvas: cv3, antialias: true, preserveDrawingBuffer: true });
@@ -2305,7 +2306,7 @@ function buildArch() {
   });
   Core.activeOpenings(st).forEach((o) => buildOpening(o));
   buildCurtains();
-  DATA.beams.forEach((b) => rectBox(b, WALL_H - b.depth, WALL_H, M.beam, archGroup, true));
+  DATA.beams.forEach((b) => rectBox(b, STOREY_H - b.depth, WALL_H, M.beam, archGroup, true));
   // ceiling slab, only shown while walking
   const shape = new THREE.Shape(DATA.outline.map((p) => new THREE.Vector2(p[0] * MM, p[1] * MM)));
   const cg = new THREE.ShapeGeometry(shape);
