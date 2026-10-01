@@ -355,10 +355,10 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     {"id":"f25","type":"wardrobe","name":"吊衣櫃","x":6367,"y":3783,"w":2690,"d":520,"h":2400,"rot":0},{"id":"f25b","type":"cabinet","name":"收納櫃（彈性空間東側）","x":7531,"y":4408,"w":730,"d":378,"h":2400,"rot":-90},
     {"id":"f28","type":"toilet","name":"馬桶","x":1450,"y":8016,"w":440,"d":709,"h":780,"rot":0},
     {"id":"f29","type":"vanity","name":"浴櫃 H60","x":2218,"y":8118,"w":605,"d":506,"h":850,"rot":0},
-    {"id":"f30","type":"shower","name":"淋浴區","x":550,"y":7671,"w":950,"d":1400,"h":2000,"rot":0},
+    {"id":"f30","type":"shower","name":"淋浴區","x":550,"y":7671,"w":950,"d":1400,"h":2000,"rot":0,"mount":{"side":"back","at":0}},
     {"id":"f31","type":"vanity","name":"浴櫃","x":8668,"y":3416,"w":605,"d":504,"h":850,"rot":-90},
     {"id":"f32","type":"toilet","name":"馬桶","x":8917,"y":2425,"w":440,"d":706,"h":780,"rot":-90},
-    {"id":"f33","type":"shower","name":"淋浴區","x":8546,"y":1624,"w":1448,"d":800,"h":2000,"rot":180},
+    {"id":"f33","type":"shower","name":"淋浴區","x":8546,"y":1624,"w":1448,"d":800,"h":2000,"rot":180,"mount":{"side":"left","at":-74}},
     {"id":"f34","type":"washer","name":"洗衣機","x":7300,"y":8420,"w":620,"d":620,"h":950,"rot":0},
     {"id":"f35","type":"plant","name":"植栽","x":1150,"y":450,"w":450,"d":450,"h":1200,"rot":0}
   ],
@@ -1212,7 +1212,13 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
         ctx.strokeStyle = 'rgba(80,110,130,.6)';
         line(x0, y0, x0 + w, y0 + d); line(x0 + w, y0, x0, y0 + d);
         ctx.strokeStyle = '#5b554d';
-        ctx.fillStyle = '#ffffff'; ell(0, 0, 45, 45, true);
+        var mt = f.mount || { side: 'back', at: 0 };
+        var mx = mt.side === 'left' ? x0 : mt.side === 'right' ? x0 + w : mt.at;
+        var my = mt.side === 'back' ? y0 : mt.side === 'front' ? y0 + d : mt.at;
+        var mnx = mt.side === 'left' ? 1 : mt.side === 'right' ? -1 : 0, mny = mt.side === 'back' ? 1 : mt.side === 'front' ? -1 : 0;
+        ctx.fillStyle = '#c9ced2';
+        if (mnx) rect(mnx > 0 ? mx : mx - 60, my - 140, 60, 280, true); else rect(mx - 140, mny > 0 ? my : my - 60, 280, 60, true);
+        ctx.fillStyle = '#ffffff'; ell(mx + mnx * 90, my + mny * 90, 30, 30, true);
         break;
       case 'kitchen': {
         rect(x0, y0, w, d, true);
@@ -2495,8 +2501,17 @@ function buildModel(f) {
       const gh = 2000;
       part(g, w, gh, 10, 0, 40, d / 2 - 5, M.glass).castShadow = false;
       part(g, 10, gh, d, w / 2 - 5, 40, 0, M.glass).castShadow = false;
-      cyl(g, 25, 2100, -w / 2 + 80, 0, zb + 80, metal, 12);
-      cyl(g, 110, 15, -w / 2 + 200, 2100, zb + 200, metal, 24);
+      // Wall-mounted set from the signed schedule (mixer, 685 mm slide rail, handheld), built with the wall at z = 0 and the room toward +z.
+      const mt = f.mount || { side: 'back', at: 0 };
+      const chrome = mat('#d4d8dc', { metalness: 0.15, roughness: 0.3 });
+      const frame = { back: [mt.at, -d / 2, 0], left: [-w / 2, mt.at, Math.PI / 2], right: [w / 2, mt.at, -Math.PI / 2], front: [mt.at, d / 2, Math.PI] }[mt.side] || [0, -d / 2, 0];
+      const set = new THREE.Group();
+      set.position.set(frame[0] * MM, 0, frame[1] * MM);
+      set.rotation.y = frame[2];
+      part(set, 280, 90, 60, 0, 975, 30, chrome);
+      cyl(set, 15, 685, 0, 1120, 45, chrome, 12);
+      part(set, 55, 180, 55, 0, 1550, 85, chrome);
+      g.add(set);
       break;
     }
     case 'kitchen': {

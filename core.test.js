@@ -479,3 +479,23 @@ test('the bird view wall cut height defaults to 2500 mm in the state, the slider
   assert.strictEqual(Number(label[1]), 2500, 'slider label');
   assert.ok(2500 >= attr('min') && 2500 <= attr('max') && (2500 - attr('min')) % attr('step') === 0, '2500 is reachable on the slider');
 });
+
+test('each shower set is wall mounted on a non-glass side at the plumbing point of the 2026-05-21 plan', () => {
+  // Same wall points as the Blender model (guest: north wall, shower centre; master: east wall, south half).
+  const planPoint = { f30: [550, 8290], f33: [9200, 1550] };
+  for (const id of ['f30', 'f33']) {
+    const f = data.furniture.find(x => x.id === id);
+    assert.ok(f.mount, `${id} declares where its shower set is mounted`);
+    assert.ok(['back', 'left'].includes(f.mount.side), `${id}: the glass is on the front and right sides, so the set cannot be there`);
+    const along = f.mount.side === 'back' ? f.w : f.d;
+    assert.ok(Math.abs(f.mount.at) <= along / 2 - 140, `${id}: the 280 mm mixer stays inside the shower footprint`);
+    // Item-local plan frame: x to the right, z toward the front (south at rot 0); rot turns counter-clockwise with y north.
+    const lx = f.mount.side === 'back' ? f.mount.at : -f.w / 2;
+    const lz = f.mount.side === 'back' ? -f.d / 2 : f.mount.at;
+    const a = f.rot * Math.PI / 180;
+    const wx = f.x + lx * Math.cos(a) + lz * Math.sin(a);
+    const wy = f.y + lx * Math.sin(a) - lz * Math.cos(a);
+    assert.ok(Math.abs(wx - planPoint[id][0]) <= 100 && Math.abs(wy - planPoint[id][1]) <= 100,
+      `${id}: wall point (${Math.round(wx)}, ${Math.round(wy)}) should be near ${planPoint[id]}`);
+  }
+});
