@@ -316,3 +316,38 @@ test('the bedroom wardrobe matches the drawing and clears the entrance slider', 
   assert.strictEqual(f.d, 600);
   assert.ok(Core.furnitureAABB(f).y2 <= 960, 'wardrobe ends before the slider track');
 });
+
+test('a saved state from an older furniture layout is refreshed once and keeps user-added pieces', () => {
+  const s = Core.defaultState(data);
+  delete s.furnSig;                                        // legacy save, written before furnSig existed
+  s.furniture = s.furniture.filter(f => f.id !== 'f25b'); // old layout lacked this cabinet
+  const f08 = s.furniture.find(f => f.id === 'f08');
+  f08.y -= 300;                                            // old position
+  s.furniture.push({ id: 'n3', type: 'table', name: '自訂桌', x: 3000, y: 3000, w: 800, d: 600, h: 750, rot: 0 });
+  const r = Core.sanitizeState(JSON.parse(JSON.stringify(s)), data);
+  assert.strictEqual(r.furnitureRefreshed, true);
+  const want = data.furniture.find(f => f.id === 'f08');
+  assert.strictEqual(r.state.furniture.find(f => f.id === 'f08').y, want.y);
+  assert.ok(r.state.furniture.some(f => f.id === 'f25b'), 'new default cabinet must appear');
+  assert.ok(r.state.furniture.some(f => f.id === 'n3'), 'user-added furniture must survive');
+  assert.strictEqual(r.state.furniture.length, data.furniture.length + 1);
+  const again = Core.sanitizeState(JSON.parse(JSON.stringify(r.state)), data);
+  assert.strictEqual(again.furnitureRefreshed, false);
+});
+
+test('a saved state with the current furniture layout keeps the user moves', () => {
+  const s = Core.defaultState(data);
+  s.furniture.find(f => f.id === 'f08').y += 250;
+  const r = Core.sanitizeState(JSON.parse(JSON.stringify(s)), data);
+  assert.strictEqual(r.furnitureRefreshed, false);
+  assert.strictEqual(r.state.furniture.find(f => f.id === 'f08').y, data.furniture.find(f => f.id === 'f08').y + 250);
+});
+
+test('editing a default furniture piece in the plan data invalidates old saves', () => {
+  const s = Core.defaultState(data);
+  const d2 = JSON.parse(JSON.stringify(data));
+  d2.furniture.find(f => f.id === 'f08').w += 10;
+  const r = Core.sanitizeState(JSON.parse(JSON.stringify(s)), d2);
+  assert.strictEqual(r.furnitureRefreshed, true);
+  assert.strictEqual(r.state.furniture.find(f => f.id === 'f08').w, d2.furniture.find(f => f.id === 'f08').w);
+});

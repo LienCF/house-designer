@@ -401,10 +401,16 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
+  /* Signature of the default furniture layout; a save written against another layout gets refreshed. */
+  function furnSig(data) {
+    var t = JSON.stringify(data.furniture), h = 5381;
+    for (var i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
+    return h.toString(36);
+  }
   function defaultState(data) {
     return clone({
       walls: data.walls, openings: data.openings, furniture: data.furniture,
-      floors: data.floors, measures: [], viewer: data.viewer, nextId: 1
+      floors: data.floors, measures: [], viewer: data.viewer, nextId: 1, furnSig: furnSig(data)
     });
   }
 
@@ -765,8 +771,13 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     out.openings = def.openings;
     Object.keys(raw.floors).forEach(function (k) { if (typeof raw.floors[k] === 'string') out.floors[k] = raw.floors[k]; });
     var seen = {};
+    var sig = furnSig(data), refreshed = raw.furnSig !== sig;
+    if (refreshed) {
+      def.furniture.forEach(function (f) { seen[f.id] = true; out.furniture.push(f); });
+    }
     raw.furniture.forEach(function (f, i) {
       if (!obj(f) || !num(f.x) || !num(f.y) || !(num(f.w) && f.w > 0) || !(num(f.d) && f.d > 0)) return;
+      if (refreshed && !(typeof f.id === 'string' && /^n\d+$/.test(f.id) && !seen[f.id])) return;
       var g = clone(f);
       g.id = typeof g.id === 'string' && !seen[g.id] ? g.id : 'f_r' + i;
       seen[g.id] = true;
@@ -781,7 +792,8 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     var maxU = 0;
     out.walls.concat(out.furniture).forEach(function (o) { var m = /^[Un](\d+)$/.exec(o.id); if (m) maxU = Math.max(maxU, +m[1]); });
     out.nextId = Math.max(num(raw.nextId) ? Math.floor(raw.nextId) : 1, maxU + 1);
-    return { state: out, migrated: !same };
+    out.furnSig = sig;
+    return { state: out, migrated: !same, furnitureRefreshed: refreshed };
   }
 
   function History(limit) { this.stack = []; this.idx = -1; this.limit = limit || 120; }
@@ -1013,6 +1025,10 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     }
   }
   var MIGRATED_MSG = '圖面已更新：牆體與門窗改用新圖面，保留拆改、家具與地板';
+  var FURN_MSG = '家具已更新為最新設計圖：自行新增的家具保留，原有家具的移動與刪除已重置';
+  function updateMsg(r) {
+    return r.furnitureRefreshed ? FURN_MSG : r.migrated ? MIGRATED_MSG : '';
+  }
   function loadLocal() {
     try {
       var raw = localStorage.getItem(STORE_KEY);
@@ -2054,7 +2070,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
       App.state = r.state; App.selId = null;
       App.commit('all');
       App.emit('viewer');
-      toast(r.migrated ? '已匯入方案；' + MIGRATED_MSG : '已匯入方案');
+      toast(updateMsg(r) ? '已匯入方案；' + updateMsg(r) : '已匯入方案');
     }).catch(function (err) { toast('匯入失敗：' + err.message, true); });
     e.target.value = '';
   });
@@ -2142,7 +2158,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
   updateScale();
   setTool('select');
   refreshUI();
-  if (saved) { $('stSaved').textContent = '已載入本地儲存的方案'; if (saved.migrated) { toast(MIGRATED_MSG); autosave(); } }
+  if (saved) { $('stSaved').textContent = '已載入本地儲存的方案'; if (updateMsg(saved)) { toast(updateMsg(saved)); autosave(); } }
 })();
 </script>
 
