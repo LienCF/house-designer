@@ -418,3 +418,32 @@ test('living room sofa, desk, chair and TV stand sizes match the space plan draw
   assert.strictEqual(f('f10').y - f('f11').y, 876);        // chairs sit closer together than the desks
   assert.strictEqual((f('f10').y + f('f11').y) / 2, f('f09').y / 2 + f('f09b').y / 2);
 });
+
+test('furniture leaves at least 600 mm clear in front of every door and slider opening', () => {
+  const ext = o => (Math.abs(o.rot) % 180 === 90 ? { ex: o.d, ey: o.w } : { ex: o.w, ey: o.d });
+  const DEPTH = 600, MIN_CLEAR = 600, MIN_INTRUSION = 100;
+  const problems = [];
+  for (const op of data.openings.filter(o => o.kind === 'door' || o.kind === 'slider')) {
+    const horiz = op.x2 - op.x1 > op.y2 - op.y1;            // opening runs along x
+    const a = horiz ? op.x1 : op.y1, b = horiz ? op.x2 : op.y2;
+    for (const side of [-1, 1]) {
+      const lo = horiz ? (side < 0 ? op.y1 - DEPTH : op.y2) : (side < 0 ? op.x1 - DEPTH : op.x2);
+      const hi = lo + DEPTH;
+      const spans = [];
+      for (const f of data.furniture) {
+        if (f.type === 'rug') continue;
+        const e = ext(f);
+        const [f1, f2] = horiz ? [f.x - e.ex / 2, f.x + e.ex / 2] : [f.y - e.ey / 2, f.y + e.ey / 2];
+        const [p1, p2] = horiz ? [f.y - e.ey / 2, f.y + e.ey / 2] : [f.x - e.ex / 2, f.x + e.ex / 2];
+        const depth = Math.min(hi, p2) - Math.max(lo, p1);
+        const s1 = Math.max(a, f1), s2 = Math.min(b, f2);
+        if (depth >= MIN_INTRUSION && s2 > s1) spans.push([s1, s2, f.id]);
+      }
+      spans.sort((x, y) => x[0] - y[0]);
+      let blocked = 0, end = -Infinity;
+      for (const [s1, s2] of spans) { blocked += Math.max(0, s2 - Math.max(s1, end)); end = Math.max(end, s2); }
+      if (b - a - blocked < MIN_CLEAR) problems.push(`${op.id} ${op.name} side ${side}: ${spans.map(s => s[2]).join(',')} leave ${b - a - blocked} mm`);
+    }
+  }
+  assert.deepStrictEqual(problems, []);
+});
