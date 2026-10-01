@@ -280,10 +280,10 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     {"id":"O07","name":"更衣室窗","kind":"window","x1":7721,"y1":3973,"x2":7870,"y2":4773,"hosts":[],"sill":900,"head":2250},
     {"id":"O08","name":"主浴窗","kind":"window","x1":8270,"y1":3725,"x2":8921,"y2":3874,"hosts":[],"sill":1100,"head":2250},
     {"id":"O09","name":"後陽台實體女兒牆","kind":"parapet","x1":8270,"y1":6361,"x2":8421,"y2":8270,"hosts":[],"head":1100},
-    {"id":"O10","name":"客浴拉門","kind":"slider","x1":1775,"y1":6872,"x2":2523,"y2":6971,"hosts":["P07"],"park":"start"},
-    {"id":"O11","name":"主浴拉門","kind":"slider","x1":7721,"y1":2774,"x2":7822,"y2":3525,"hosts":["P03","P04"],"park":"end"},
-    {"id":"O12","name":"臥室拉門","kind":"slider","x1":4064,"y1":1024,"x2":4923,"y2":1125,"hosts":["P08"],"park":"start"},
-    {"id":"O13","name":"更衣室拉門","kind":"slider","x1":5022,"y1":2674,"x2":5742,"y2":2774,"hosts":["P02"],"park":"end"}
+    {"id":"O10","name":"客浴拉門","kind":"slider","x1":1775,"y1":6872,"x2":2523,"y2":6971,"hosts":["P07"],"park":"start","side":"hi","len":740,"cover":285},
+    {"id":"O11","name":"主浴拉門","kind":"slider","x1":7721,"y1":2774,"x2":7822,"y2":3525,"hosts":["P03","P04"],"park":"start","side":"hi","len":740,"cover":282},
+    {"id":"O12","name":"臥室拉門","kind":"slider","x1":4064,"y1":1024,"x2":4923,"y2":1125,"hosts":["P08"],"park":"start","side":"lo","len":832,"cover":402},
+    {"id":"O13","name":"更衣室拉門","kind":"slider","x1":5022,"y1":2674,"x2":5742,"y2":2774,"hosts":["P02"],"park":"end","side":"hi","len":740,"cover":714}
   ],
   "dividers": [
     {"id":"D1","between":"玄關／客餐廳","x1":875,"y1":5672,"x2":2624,"y2":5672},
@@ -316,6 +316,10 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     {"id":"B6","x1":4475,"y1":4521,"x2":8075,"y2":4871,"depth":650,"section":"35×65"},
     {"id":"B7","x1":-314,"y1":5521,"x2":725,"y2":5871,"depth":650,"section":"35×65"}
   ],
+  "curtains": [
+    {"id":"K01","name":"客廳落地窗窗簾","opening":"O02","x1":885,"x2":2974,"ys":[1163,1243],"stack":440,"rail":2500,"hem":30},
+    {"id":"K02","name":"臥室南窗窗簾","opening":"O03","x1":3855,"x2":5323,"ys":[105,182],"stack":440,"rail":2500,"hem":30}
+  ],
   "dims": {
     "top":    {"at": 9750, "chain": [-75, 6347, 7771, 8670], "overall": [-174, 9420]},
     "bottom": {"at": -800, "chain": [725, 1325, 3074, 3323, 5323, 8070, 8820, 9420], "overall": [-174, 9420]},
@@ -327,11 +331,11 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     {"id":"f01","type":"rug","name":"地毯","x":1950,"y":3125,"w":2000,"d":1400,"h":10,"rot":90},
     {"id":"f02","type":"sofa","name":"三人沙發","x":3000,"y":3125,"w":2100,"d":900,"h":820,"rot":-90},
     {"id":"f03","type":"coffeetable","name":"茶几","x":1950,"y":3125,"w":1000,"d":500,"h":420,"rot":90},
-    {"id":"f04","type":"tvstand","name":"電視矮櫃 H40","x":1100,"y":3221,"w":2230,"d":450,"h":400,"rot":90},
-    {"id":"f05","type":"tv","name":"壁掛電視 60吋","x":915,"y":3221,"w":1340,"d":80,"h":780,"rot":90,"elev":1000},
-    {"id":"f06","type":"cabinet","name":"收納櫃 H108","x":1100,"y":4710,"w":750,"d":450,"h":1080,"rot":90},
-    {"id":"f07","type":"bench","name":"玄關座椅","x":1100,"y":5380,"w":580,"d":450,"h":450,"rot":90},
-    {"id":"f08","type":"cabinet","name":"邊櫃","x":1035,"y":1623,"w":590,"d":320,"h":900,"rot":90},
+    {"id":"f04","type":"tvstand","name":"電視矮櫃 H40","x":1100,"y":3120,"w":2400,"d":450,"h":400,"rot":90},
+    {"id":"f05","type":"tv","name":"壁掛電視 60吋","x":915,"y":3120,"w":1340,"d":80,"h":780,"rot":90,"elev":1000},
+    {"id":"f06","type":"cabinet","name":"收納櫃 H108","x":1100,"y":4770,"w":900,"d":450,"h":1080,"rot":90},
+    {"id":"f07","type":"bench","name":"玄關座椅","x":1100,"y":5445,"w":450,"d":450,"h":450,"rot":90},
+    {"id":"f08","type":"cabinet","name":"邊櫃","x":1035,"y":1620,"w":600,"d":320,"h":2400,"rot":90},
     {"id":"f09","type":"table","name":"升降書桌 H76","x":3900,"y":2600,"w":1050,"d":600,"h":760,"rot":90},{"id":"f09b","type":"table","name":"升降書桌 H76","x":3900,"y":3650,"w":1050,"d":600,"h":760,"rot":90},
     {"id":"f10","type":"chair","name":"人體工學椅","x":4500,"y":3650,"w":600,"d":600,"h":1000,"rot":-90},
     {"id":"f11","type":"chair","name":"人體工學椅","x":4500,"y":2600,"w":600,"d":600,"h":1000,"rot":-90},
@@ -346,9 +350,9 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     {"id":"f20","type":"nightstand","name":"床頭櫃","x":5480,"y":2454,"w":450,"d":400,"h":500,"rot":0},
     {"id":"f21","type":"nightstand","name":"床頭櫃","x":7480,"y":2454,"w":450,"d":400,"h":500,"rot":0},
     {"id":"f22","type":"tv","name":"壁掛電視 50吋","x":6500,"y":115,"w":1120,"d":80,"h":650,"rot":180,"elev":1000},
-    {"id":"f23","type":"wardrobe","name":"衣櫃","x":3512,"y":550,"w":949,"d":576,"h":2400,"rot":90},
+    {"id":"f23","type":"wardrobe","name":"衣櫃","x":3524,"y":515,"w":880,"d":600,"h":2400,"rot":90},
     {"id":"f24","type":"cabinet","name":"收納櫃（彈性空間側）","x":6182,"y":4203,"w":2320,"d":320,"h":2400,"rot":180},
-    {"id":"f25","type":"wardrobe","name":"吊衣櫃","x":6367,"y":3783,"w":2690,"d":520,"h":2400,"rot":0},
+    {"id":"f25","type":"wardrobe","name":"吊衣櫃","x":6367,"y":3783,"w":2690,"d":520,"h":2400,"rot":0},{"id":"f25b","type":"cabinet","name":"收納櫃（彈性空間東側）","x":7531,"y":4408,"w":730,"d":378,"h":2400,"rot":-90},
     {"id":"f28","type":"toilet","name":"馬桶","x":1450,"y":8016,"w":440,"d":709,"h":780,"rot":0},
     {"id":"f29","type":"vanity","name":"浴櫃 H60","x":2218,"y":8118,"w":605,"d":506,"h":850,"rot":0},
     {"id":"f30","type":"shower","name":"淋浴區","x":550,"y":7671,"w":950,"d":1400,"h":2000,"rot":0},
@@ -402,6 +406,18 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
       walls: data.walls, openings: data.openings, furniture: data.furniture,
       floors: data.floors, measures: [], viewer: data.viewer, nextId: 1
     });
+  }
+
+  /* One sliding leaf per slider door, riding on the lo or hi face of its wall (plan rect, mm). */
+  var SLIDER_T = 35, SLIDER_GAP = 5;
+  function sliderLeaf(o) {
+    var horiz = (o.x2 - o.x1) >= (o.y2 - o.y1);
+    var a = horiz ? o.x1 : o.y1, b = horiz ? o.x2 : o.y2;
+    var len = o.len || (b - a), cover = o.cover == null ? len : o.cover;
+    var s0 = o.park === 'end' ? b - cover : a + cover - len;
+    var n1 = horiz ? o.y1 : o.x1, n2 = horiz ? o.y2 : o.x2;
+    var t0 = o.side === 'lo' ? n1 - SLIDER_GAP - SLIDER_T : n2 + SLIDER_GAP;
+    return horiz ? { x1: s0, x2: s0 + len, y1: t0, y2: t0 + SLIDER_T } : { y1: s0, y2: s0 + len, x1: t0, x2: t0 + SLIDER_T };
   }
 
   function wallRemovable(w) { return !!w && w.type === 'partition'; }
@@ -788,7 +804,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     CELL: CELL, clone: clone, defaultState: defaultState, wallRemovable: wallRemovable,
     activeWalls: activeWalls, activeOpenings: activeOpenings, toggleWall: toggleWall, addWall: addWall,
     polygonArea: polygonArea, bbox: bbox, computeRooms: computeRooms, regionMaterial: regionMaterial,
-    setRegionMaterial: setRegionMaterial, rotatedHalfExtents: rotatedHalfExtents, furnitureAABB: furnitureAABB,
+    setRegionMaterial: setRegionMaterial, rotatedHalfExtents: rotatedHalfExtents, furnitureAABB: furnitureAABB, sliderLeaf: sliderLeaf,
     snapFurniture: snapFurniture, snapPoints: snapPoints, nearestPoint: nearestPoint, blockers: blockers,
     circleHits: circleHits, slideCircle: slideCircle, sanitizeState: sanitizeState, History: History
   };
@@ -1292,17 +1308,45 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
       ctx.lineWidth = 0.8; ctx.setLineDash([4, 3]);
       ctx.beginPath(); ctx.arc(hx, hy, rad, a0, a1, dA < 0); ctx.stroke(); ctx.setLineDash([]);
     } else if (o.kind === 'slider') {
-      ctx.strokeStyle = '#4a4743'; ctx.lineWidth = 1.6;
+      var lf = sRect(C.sliderLeaf(o), v);
+      ctx.fillStyle = '#fbfaf7'; ctx.strokeStyle = '#4a4743'; ctx.lineWidth = 1.4;
+      ctx.fillRect(lf.x, lf.y, lf.w, lf.h); ctx.strokeRect(lf.x, lf.y, lf.w, lf.h);
+      // slide-direction arrow, drawn beside the leaf toward the room side of the track
+      var hi = o.side !== 'lo', off = 150 * v.s;
+      ctx.lineWidth = 1; ctx.strokeStyle = '#6b665e'; ctx.fillStyle = '#6b665e';
+      var ah = Math.max(3, 40 * v.s);
       ctx.beginPath();
       if (horiz) {
-        ctx.moveTo(r.x, r.y + r.h * 0.35); ctx.lineTo(r.x + r.w * 0.55, r.y + r.h * 0.35);
-        ctx.moveTo(r.x + r.w * 0.45, r.y + r.h * 0.65); ctx.lineTo(r.x + r.w, r.y + r.h * 0.65);
+        var ay = (hi ? lf.y - off : lf.y + lf.h + off), ax1 = r.x + r.w * 0.2, ax2 = r.x + r.w * 0.8;
+        ctx.moveTo(ax1, ay); ctx.lineTo(ax2, ay); ctx.moveTo(ax2, ay); ctx.lineTo(ax2 - ah * 1.6, ay - ah * 0.7); ctx.lineTo(ax2 - ah * 1.6, ay + ah * 0.7); ctx.closePath();
       } else {
-        ctx.moveTo(r.x + r.w * 0.35, r.y); ctx.lineTo(r.x + r.w * 0.35, r.y + r.h * 0.55);
-        ctx.moveTo(r.x + r.w * 0.65, r.y + r.h * 0.45); ctx.lineTo(r.x + r.w * 0.65, r.y + r.h);
+        var ax = (hi ? lf.x + lf.w + off : lf.x - off), ay1 = r.y + r.h * 0.8, ay2 = r.y + r.h * 0.2;
+        ctx.moveTo(ax, ay1); ctx.lineTo(ax, ay2); ctx.moveTo(ax, ay2); ctx.lineTo(ax - ah * 0.7, ay2 + ah * 1.6); ctx.lineTo(ax + ah * 0.7, ay2 + ah * 1.6); ctx.closePath();
       }
-      ctx.stroke();
+      ctx.stroke(); ctx.fill();
     }
+    ctx.restore();
+  }
+
+  /* Curtain stacks as drawn in the design: two wavy layers plus a short tail and arrowhead. */
+  function drawCurtains(ctx, v) {
+    ctx.save();
+    ctx.strokeStyle = '#8a6a4a'; ctx.lineWidth = 1; ctx.lineJoin = 'round';
+    (DATA.curtains || []).forEach(function (c) {
+      c.ys.forEach(function (y) {
+        var period = 55, amp = 20, n = Math.round(c.stack / period) * 8;
+        ctx.beginPath();
+        for (var i = 0; i <= n; i++) {
+          var x = c.x1 + c.stack * i / n;
+          var yy = y + amp * Math.sin(2 * Math.PI * (x - c.x1) / (c.stack / Math.round(c.stack / period)));
+          if (i === 0) ctx.moveTo(X(x, v), Y(yy, v)); else ctx.lineTo(X(x, v), Y(yy, v));
+        }
+        var xe = c.x1 + c.stack;
+        ctx.lineTo(X(xe + 35, v), Y(y, v));
+        ctx.moveTo(X(xe + 35, v), Y(y + 28, v)); ctx.lineTo(X(xe + 35, v), Y(y, v)); ctx.lineTo(X(xe + 65, v), Y(y, v)); ctx.closePath();
+        ctx.stroke();
+      });
+    });
     ctx.restore();
   }
 
@@ -1424,6 +1468,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     }
     // walls
     C.activeOpenings(st).forEach(function (o) { drawOpening(ctx, o, v); });
+    drawCurtains(ctx, v);
     st.walls.forEach(function (wl) {
       var r = sRect(wl, v);
       ctx.save();
@@ -2182,6 +2227,8 @@ const M = {
   frame: new THREE.MeshStandardMaterial({ color: '#5b5f63', roughness: 0.5, metalness: 0.4 }),
   door: new THREE.MeshStandardMaterial({ color: '#c7ab88', roughness: 0.7, side: THREE.DoubleSide }),
   slider: new THREE.MeshStandardMaterial({ color: '#e9e4dc', roughness: 0.6, side: THREE.DoubleSide }),
+  sheer: new THREE.MeshStandardMaterial({ color: '#f3eee6', roughness: 0.95, transparent: true, opacity: 0.62, side: THREE.DoubleSide, depthWrite: false }),
+  drape: new THREE.MeshStandardMaterial({ color: '#b9a58d', roughness: 1, side: THREE.DoubleSide }),
   removed: new THREE.MeshBasicMaterial({ color: '#b5483b', transparent: true, opacity: 0.35, depthWrite: false }),
   ceiling: new THREE.MeshStandardMaterial({ color: '#f7f5f1', roughness: 1, side: THREE.DoubleSide }),
   select: new THREE.LineBasicMaterial({ color: '#2f6f6a' })
@@ -2225,6 +2272,7 @@ function buildArch() {
     rectBox(w, 0, WALL_H, material, archGroup, true);
   });
   Core.activeOpenings(st).forEach((o) => buildOpening(o));
+  buildCurtains();
   DATA.beams.forEach((b) => rectBox(b, WALL_H - b.depth, WALL_H, M.beam, archGroup, true));
   // ceiling slab, only shown while walking
   const shape = new THREE.Shape(DATA.outline.map((p) => new THREE.Vector2(p[0] * MM, p[1] * MM)));
@@ -2276,11 +2324,33 @@ function buildOpening(o) {
     leaf.castShadow = leaf.receiveShadow = true;
     archGroup.add(leaf);
   } else if (o.kind === 'slider') {
-    const span = horiz ? o.x2 - o.x1 : o.y2 - o.y1, len = span * 0.55, a = horiz ? o.x1 : o.y1;
-    const s0 = o.park === 'end' ? a + span - len : a;
-    const r = horiz ? { x1: s0, x2: s0 + len, y1: o.y1, y2: o.y2 } : { y1: s0, y2: s0 + len, x1: o.x1, x2: o.x2 };
-    rectBox(thin(r, 35), 10, 2190, M.slider, archGroup, false);
+    rectBox(Core.sliderLeaf(o), 10, 2190, M.slider, archGroup, false);
   }
+}
+
+/* pleated curtain stack: a sine-corrugated sheet hanging from the rail to just above the floor */
+function pleatSheet(x0, len, y, z0, z1, mat) {
+  const pleats = Math.max(1, Math.round(len / 55)), n = pleats * 8, amp = 20;
+  const pos = [], idx = [];
+  for (let i = 0; i <= n; i++) {
+    const x = x0 + len * i / n, yy = y + amp * Math.sin(2 * Math.PI * pleats * i / n);
+    pos.push(x * MM, z0 * MM, -yy * MM, x * MM, z1 * MM, -yy * MM);
+    if (i < n) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  const m = new THREE.Mesh(g, mat);
+  m.castShadow = mat !== M.sheer;
+  archGroup.add(m);
+}
+function buildCurtains() {
+  (DATA.curtains || []).forEach((c) => {
+    const ymid = (c.ys[0] + c.ys[1]) / 2;
+    rectBox({ x1: c.x1, x2: c.x2, y1: ymid - 45, y2: ymid + 45 }, c.rail, c.rail + 25, M.frame, archGroup, false);
+    c.ys.forEach((y, i) => pleatSheet(c.x1, c.stack, y, c.hem, c.rail - 10, i === 0 ? M.sheer : M.drape));
+  });
 }
 function frameAround(o, horiz, z0, z1) {
   const t = 50, mid = horiz ? { y1: (o.y1 + o.y2) / 2 - 40, y2: (o.y1 + o.y2) / 2 + 40 } : { x1: (o.x1 + o.x2) / 2 - 40, x2: (o.x1 + o.x2) / 2 + 40 };
