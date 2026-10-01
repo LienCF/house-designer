@@ -447,3 +447,11 @@ test('furniture leaves at least 600 mm clear in front of every door and slider o
   }
   assert.deepStrictEqual(problems, []);
 });
+
+test('the living-room TV centre sits at seated eye level and clears the TV stand', () => {
+  const tv = data.furniture.find(f => f.id === 'f05');
+  const stand = data.furniture.find(f => f.id === 'f04');
+  const centre = tv.elev + tv.h / 2;
+  assert.ok(centre >= 950 && centre <= 1200, `TV centre ${centre} mm should be 950-1200 mm (seated eye level)`);
+  assert.ok(tv.elev >= stand.h + 100, `TV bottom ${tv.elev} mm should clear the stand top (${stand.h} mm) by 100 mm`);
+});
