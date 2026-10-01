@@ -306,7 +306,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     {"name":"管道間","x":2840,"y":8150},
     {"name":"管道間","x":9140,"y":3380}
   ],
-  "floors": {"玄關":"tile80","客餐廳":"tile80","廚房":"tile80","彈性空間":"tile80","更衣室":"tile80","臥室":"tile80","客浴":"tile80","主浴":"tile80","陽台":"balcony","後陽台":"balcony","管道間":"concrete"},
+  "floors": {"玄關":"tile80","客餐廳":"tile80","廚房":"tile80","彈性空間":"tile80","更衣室":"tile80","臥室":"tile80","客浴":"balcony","主浴":"balcony","陽台":"balcony","後陽台":"balcony","管道間":"concrete"},
   "beams": [
     {"id":"B1","x1":-314,"y1":8371,"x2":7775,"y2":8971,"depth":800,"section":"60×80"},
     {"id":"B2","x1":725,"y1":-79,"x2":8075,"y2":521,"depth":800,"section":"60×80"},
@@ -329,16 +329,16 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
   "viewer": {"x": 700, "y": 6250, "heading": -0.55},
   "furniture": [
     {"id":"f01","type":"rug","name":"地毯","x":1950,"y":3125,"w":2000,"d":1400,"h":10,"rot":90},
-    {"id":"f02","type":"sofa","name":"三人沙發","x":3000,"y":3125,"w":2100,"d":900,"h":820,"rot":-90},
+    {"id":"f02","type":"sofa","name":"三人沙發","x":3123,"y":3125,"w":2100,"d":900,"h":820,"rot":-90},
     {"id":"f03","type":"coffeetable","name":"茶几","x":1950,"y":3125,"w":1000,"d":500,"h":420,"rot":90},
     {"id":"f04","type":"tvstand","name":"電視矮櫃 H40","x":1100,"y":3120,"w":2400,"d":450,"h":400,"rot":90},
     {"id":"f05","type":"tv","name":"壁掛電視 60吋","x":915,"y":3120,"w":1340,"d":80,"h":780,"rot":90,"elev":1000},
     {"id":"f06","type":"cabinet","name":"收納櫃 H108","x":1100,"y":4770,"w":900,"d":450,"h":1080,"rot":90},
     {"id":"f07","type":"bench","name":"玄關座椅","x":1100,"y":5445,"w":450,"d":450,"h":450,"rot":90},
     {"id":"f08","type":"cabinet","name":"邊櫃","x":1035,"y":1620,"w":600,"d":320,"h":2400,"rot":90},
-    {"id":"f09","type":"table","name":"升降書桌 H76","x":3900,"y":2600,"w":1050,"d":600,"h":760,"rot":90},{"id":"f09b","type":"table","name":"升降書桌 H76","x":3900,"y":3650,"w":1050,"d":600,"h":760,"rot":90},
-    {"id":"f10","type":"chair","name":"人體工學椅","x":4500,"y":3650,"w":600,"d":600,"h":1000,"rot":-90},
-    {"id":"f11","type":"chair","name":"人體工學椅","x":4500,"y":2600,"w":600,"d":600,"h":1000,"rot":-90},
+    {"id":"f09","type":"table","name":"升降書桌 H76","x":3873,"y":2600,"w":1050,"d":600,"h":760,"rot":90},{"id":"f09b","type":"table","name":"升降書桌 H76","x":3873,"y":3650,"w":1050,"d":600,"h":760,"rot":90},
+    {"id":"f10","type":"chair","name":"人體工學椅","x":4507,"y":3563,"w":452,"d":516,"h":1000,"rot":-90},
+    {"id":"f11","type":"chair","name":"人體工學椅","x":4507,"y":2687,"w":452,"d":516,"h":1000,"rot":-90},
     {"id":"f12","type":"island","name":"中島餐檯 H86","x":3954,"y":6360,"w":1450,"d":900,"h":860,"rot":0},
     {"id":"f13","type":"stool","name":"吧檯椅","x":3600,"y":5650,"w":420,"d":420,"h":650,"rot":0},
     {"id":"f14","type":"stool","name":"吧檯椅","x":4300,"y":5650,"w":420,"d":420,"h":650,"rot":0},
@@ -407,10 +407,15 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     for (var i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
     return h.toString(36);
   }
+  // Default floors before saves recorded their baseline (floorsBase); used to tell an untouched room from a chosen one.
+  var LEGACY_FLOORS = {
+    '玄關': 'tile80', '客餐廳': 'tile80', '廚房': 'tile80', '彈性空間': 'tile80', '更衣室': 'tile80', '臥室': 'tile80',
+    '客浴': 'tile80', '主浴': 'tile80', '陽台': 'balcony', '後陽台': 'balcony', '管道間': 'concrete'
+  };
   function defaultState(data) {
     return clone({
       walls: data.walls, openings: data.openings, furniture: data.furniture,
-      floors: data.floors, measures: [], viewer: data.viewer, nextId: 1, furnSig: furnSig(data)
+      floors: data.floors, floorsBase: data.floors, measures: [], viewer: data.viewer, nextId: 1, furnSig: furnSig(data)
     });
   }
 
@@ -770,6 +775,14 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     }));
     out.openings = def.openings;
     Object.keys(raw.floors).forEach(function (k) { if (typeof raw.floors[k] === 'string') out.floors[k] = raw.floors[k]; });
+    // A default floor that changed since the save was written applies to rooms the user never re-floored.
+    var base = obj(raw.floorsBase) ? raw.floorsBase : LEGACY_FLOORS, floorsRefreshed = false;
+    Object.keys(def.floors).forEach(function (k) {
+      if (base[k] === def.floors[k]) return;
+      floorsRefreshed = true;
+      if (out.floors[k] === undefined || out.floors[k] === base[k]) out.floors[k] = def.floors[k];
+    });
+    out.floorsBase = clone(def.floors);
     var seen = {};
     var sig = furnSig(data), refreshed = raw.furnSig !== sig;
     if (refreshed) {
@@ -793,7 +806,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
     out.walls.concat(out.furniture).forEach(function (o) { var m = /^[Un](\d+)$/.exec(o.id); if (m) maxU = Math.max(maxU, +m[1]); });
     out.nextId = Math.max(num(raw.nextId) ? Math.floor(raw.nextId) : 1, maxU + 1);
     out.furnSig = sig;
-    return { state: out, migrated: !same, furnitureRefreshed: refreshed };
+    return { state: out, migrated: !same, furnitureRefreshed: refreshed, floorsRefreshed: floorsRefreshed };
   }
 
   function History(limit) { this.stack = []; this.idx = -1; this.limit = limit || 120; }
@@ -1026,8 +1039,12 @@ kbd { font: 11px ui-monospace, Menlo, monospace; background: var(--panel-2); bor
   }
   var MIGRATED_MSG = '圖面已更新：牆體與門窗改用新圖面，保留拆改、家具與地板';
   var FURN_MSG = '家具已更新為最新設計圖：自行新增的家具保留，原有家具的移動與刪除已重置';
+  var FLOOR_MSG = '地板預設已更新：沒有自行更換過的房間已套用新材質，你更換過的地板保留';
   function updateMsg(r) {
-    return r.furnitureRefreshed ? FURN_MSG : r.migrated ? MIGRATED_MSG : '';
+    var m = [];
+    if (r.furnitureRefreshed) m.push(FURN_MSG); else if (r.migrated) m.push(MIGRATED_MSG);
+    if (r.floorsRefreshed) m.push(FLOOR_MSG);
+    return m.join('；');
   }
   function loadLocal() {
     try {

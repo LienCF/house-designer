@@ -351,3 +351,70 @@ test('editing a default furniture piece in the plan data invalidates old saves',
   assert.strictEqual(r.furnitureRefreshed, true);
   assert.strictEqual(r.state.furniture.find(f => f.id === 'f08').w, d2.furniture.find(f => f.id === 'f08').w);
 });
+
+test('both bathrooms use the non-slip tile by default', () => {
+  assert.strictEqual(data.floors['客浴'], 'balcony');
+  assert.strictEqual(data.floors['主浴'], 'balcony');
+  assert.strictEqual(Core.defaultState(data).floors['客浴'], 'balcony');
+});
+
+test('the sofa back sits against the desk and the desk is 750 mm from the bedroom wall', () => {
+  const f = id => data.furniture.find(x => x.id === id);
+  const ext = o => (Math.abs(o.rot) === 90 ? { ex: o.d, ey: o.w } : { ex: o.w, ey: o.d });
+  const sofa = f('f02'), desk = f('f09'), desk2 = f('f09b'), p01 = data.walls.find(w => w.id === 'P01');
+  const sofaEast = sofa.x + ext(sofa).ex / 2;
+  const deskWest = desk.x - ext(desk).ex / 2, deskEast = desk.x + ext(desk).ex / 2;
+  assert.ok(Math.abs(sofaEast - deskWest) <= 1, `sofa back ${sofaEast} vs desk ${deskWest}`);
+  assert.strictEqual(p01.x1 - deskEast, 750);
+  assert.strictEqual(desk2.x, desk.x);
+  assert.ok(Math.abs(sofa.y - (desk.y + desk2.y) / 2) <= 1, 'sofa is centred on the joined desks');
+  for (const id of ['f10', 'f11']) assert.ok(f(id).x + ext(f(id)).ex / 2 < p01.x1, id + ' chair clears the bedroom wall');
+});
+
+test('legacy saves without a floor baseline pick up the new default floors', () => {
+  const s = Core.defaultState(data);
+  delete s.floorsBase; delete s.furnSig;
+  s.floors['客浴'] = 'tile80'; s.floors['主浴'] = 'tile80';
+  const r = Core.sanitizeState(JSON.parse(JSON.stringify(s)), data);
+  assert.strictEqual(r.floorsRefreshed, true);
+  assert.strictEqual(r.state.floors['客浴'], 'balcony');
+  assert.strictEqual(r.state.floors['主浴'], 'balcony');
+});
+
+test('a changed default floor reaches saves that never touched it but spares user choices', () => {
+  const s = Core.defaultState(data);
+  s.floors['臥室'] = 'walnut';                       // user choice
+  const d2 = JSON.parse(JSON.stringify(data));
+  d2.floors['玄關'] = 'oak';                         // new default for an untouched room
+  d2.floors['臥室'] = 'slate';                       // new default for a user-customised room
+  const r = Core.sanitizeState(JSON.parse(JSON.stringify(s)), d2);
+  assert.strictEqual(r.floorsRefreshed, true);
+  assert.strictEqual(r.state.floors['玄關'], 'oak');
+  assert.strictEqual(r.state.floors['臥室'], 'walnut');
+  const again = Core.sanitizeState(JSON.parse(JSON.stringify(r.state)), d2);
+  assert.strictEqual(again.floorsRefreshed, false);
+  assert.strictEqual(again.state.floors['臥室'], 'walnut');
+});
+
+test('saves on the current default floors keep user floor choices', () => {
+  const s = Core.defaultState(data);
+  s.floors['客餐廳'] = 'oak';
+  const r = Core.sanitizeState(JSON.parse(JSON.stringify(s)), data);
+  assert.strictEqual(r.floorsRefreshed, false);
+  assert.strictEqual(r.state.floors['客餐廳'], 'oak');
+});
+
+test('living room sofa, desk, chair and TV stand sizes match the space plan drawing', () => {
+  const f = id => data.furniture.find(x => x.id === id);
+  const size = o => [o.w, o.d, o.h].slice(0, 2).join('x');
+  assert.strictEqual(size(f('f02')), '2100x900');         // sofa 909 x 2105 in the drawing
+  assert.strictEqual(size(f('f09')), '1050x600');         // joined desks 609 x 2104 in total
+  assert.strictEqual(size(f('f09b')), '1050x600');
+  assert.strictEqual(size(f('f04')), '2400x450');         // TV stand outline 459 x 2402
+  for (const id of ['f10', 'f11']) {                       // chair symbol 516 (x) x 452 (y)
+    assert.strictEqual(size(f(id)), '452x516', id);
+    assert.strictEqual(f(id).x, 4507, id);
+  }
+  assert.strictEqual(f('f10').y - f('f11').y, 876);        // chairs sit closer together than the desks
+  assert.strictEqual((f('f10').y + f('f11').y) / 2, f('f09').y / 2 + f('f09b').y / 2);
+});
